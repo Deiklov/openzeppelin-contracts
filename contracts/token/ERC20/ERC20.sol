@@ -31,6 +31,8 @@ import "../../utils/Context.sol";
  * allowances. See {IERC20-approve}.
  */
 contract ERC20 is Context, IERC20, IERC20Metadata {
+    uint constant SECONDS_PER_DAY = 24 * 60 * 60;
+    
     mapping (address => uint256) private _balances;
 
     mapping (address => mapping (address => uint256)) private _allowances;
@@ -99,6 +101,13 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
     function balanceOf(address account) public view virtual override returns (uint256) {
         return _balances[account];
     }
+    // 1 = Monday, 7 = Sunday
+    modifier withoutSaturday() {
+        uint _days = block.timestamp / SECONDS_PER_DAY;
+        uint dayOfWeek = (_days + 3) % 7 + 1;
+        require(dayOfWeek!=6);
+        _;
+    }
 
     /**
      * @dev See {IERC20-transfer}.
@@ -108,7 +117,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
      * - `recipient` cannot be the zero address.
      * - the caller must have a balance of at least `amount`.
      */
-    function transfer(address recipient, uint256 amount) public virtual override returns (bool) {
+    function transfer(address recipient, uint256 amount) public virtual override  withoutSaturday returns (bool) {
         _transfer(_msgSender(), recipient, amount);
         return true;
     }
